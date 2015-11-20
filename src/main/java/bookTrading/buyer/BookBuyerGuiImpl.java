@@ -29,6 +29,8 @@ public class BookBuyerGuiImpl implements BookBuyerGui {
 	
 	private Frame mainFrame;
 	
+	Label notificationLbl = new Label();
+	
 	@Override
 	public void setAgent(BookBuyerAgent a) {
 		this.buyerAgent = a;
@@ -50,7 +52,7 @@ public class BookBuyerGuiImpl implements BookBuyerGui {
 
 	@Override
 	public void notifyUser(String message) {
-		// TODO Auto-generated method stub
+		notificationLbl.setText(message);
 		
 	}
 
@@ -60,62 +62,10 @@ public class BookBuyerGuiImpl implements BookBuyerGui {
 		
 	}
 
-//	@Override
-//	public void start(Stage primaryStage) throws Exception {
-//		primaryStage.setTitle(APP_TITLE);
-//		primaryStage.setResizable(false);
-//		GridPane gridPane = new GridPane();
-//		gridPane.setVgap(5);
-//		gridPane.setHgap(5);
-//		
-//		Label bookToBueLbl = new Label("Book to Buy");
-//		gridPane.add(bookToBueLbl, 1, 1); 
-//		
-//		final TextField bookToBuy = new TextField();
-//		gridPane.add(bookToBuy, 2, 1); 
-//		
-//		Label maxPriceLbl = new Label("Max Price");
-//		gridPane.add(maxPriceLbl, 1, 2); 
-//		
-//		final TextField maxPrice = new TextField();
-//		gridPane.add(maxPrice, 2, 2); 
-//		
-//		Label deadlineLbl = new Label("Deadline");
-//		gridPane.add(deadlineLbl, 1, 3); 
-//		
-//		final TextField deadline = new TextField();
-//		gridPane.add(deadline, 2, 3); 
-//		
-//		final BookBuyerAgent iBuyerAgent = this.buyerAgent;
-//		System.out.println("LLLLLL " + this.buyerAgent);
-//		Button button = new Button("Buy");
-//		button.setOnAction(new EventHandler<ActionEvent>() {
-//			@Override
-//			public void handle(ActionEvent event) {
-//				try {
-//					System.out.println("MMM " + bookToBuy.getText() + "  " + iBuyerAgent);
-//					iBuyerAgent.purchase(bookToBuy.getText(), Integer.valueOf(maxPrice.getText()), 
-//							new SimpleDateFormat("yyyy-MM-dd").parse(deadline.getText()));
-//				} catch (NumberFormatException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				} catch (ParseException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			}
-//		});
-//		gridPane.add(button, 1, 4, 2, 1); 
-//		
-//		Scene scene = new Scene(gridPane, APP_WINDOW_WIDTH, APP_WINDOW_HEIGHT);
-//		primaryStage.setScene(scene);
-//		primaryStage.show();
-//	}
-
 	private void launch() {
 		mainFrame = new Frame("Buyer");
 		mainFrame.setSize(APP_WINDOW_WIDTH, APP_WINDOW_HEIGHT);
-		mainFrame.setLayout(new GridLayout(3, 2, 5, 5));
+		mainFrame.setLayout(new GridLayout(4, 2, 5, 5));
 		mainFrame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent windowEvent) {
 				System.exit(0);
@@ -137,12 +87,14 @@ public class BookBuyerGuiImpl implements BookBuyerGui {
 		Button button = new Button("Buy");
 		mainFrame.add(button);
 		
+		mainFrame.add(notificationLbl);
+		
 		button.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					buyerAgent.purchase(bookToBuy.getText(), Integer.valueOf(maxPrice.getText()), new SimpleDateFormat("yyyy-MM-dd").parse("2015-11-21"));
+					buyerAgent.purchase(bookToBuy.getText(), Integer.valueOf(maxPrice.getText()), new SimpleDateFormat("yyyy-MM-dd").parse("2015-11-22"));
 				} catch (NumberFormatException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();

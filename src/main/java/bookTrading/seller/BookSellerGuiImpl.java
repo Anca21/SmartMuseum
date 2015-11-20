@@ -148,7 +148,7 @@ public class BookSellerGuiImpl implements BookSellerGui {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					sellerAgent.putForSale(bookToSell.getText(), Integer.valueOf(initPrice.getText()), Integer.valueOf(minPrice.getText()), new SimpleDateFormat("yyyy-MM-dd").parse("2015-11-21"));
+					sellerAgent.putForSale(bookToSell.getText(), Integer.valueOf(initPrice.getText()), Integer.valueOf(minPrice.getText()), new SimpleDateFormat("yyyy-MM-dd").parse("2015-11-22"));
 				} catch (NumberFormatException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
