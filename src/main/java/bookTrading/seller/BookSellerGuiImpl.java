@@ -1,7 +1,7 @@
 /**
  * 
  */
-package bookTrading.buyer;
+package bookTrading.seller;
 
 import java.awt.Button;
 import java.awt.Frame;
@@ -19,19 +19,19 @@ import java.text.SimpleDateFormat;
  * @author pradeeppeiris
  *
  */
-public class BookBuyerGuiImpl implements BookBuyerGui {
+public class BookSellerGuiImpl implements BookSellerGui {
 
 	private static final int APP_WINDOW_HEIGHT = 200;
 	private static final int APP_WINDOW_WIDTH = 300;
 	private static final String APP_TITLE = "Buyer";
 	
-	private BookBuyerAgent buyerAgent;
+	private BookSellerAgent sellerAgent;
 	
 	private Frame mainFrame;
 	
 	@Override
-	public void setAgent(BookBuyerAgent a) {
-		this.buyerAgent = a;
+	public void setAgent(BookSellerAgent a) {
+		this.sellerAgent = a;
 	}
 
 	@Override
@@ -113,7 +113,7 @@ public class BookBuyerGuiImpl implements BookBuyerGui {
 //	}
 
 	private void launch() {
-		mainFrame = new Frame("Buyer");
+		mainFrame = new Frame("Seller");
 		mainFrame.setSize(APP_WINDOW_WIDTH, APP_WINDOW_HEIGHT);
 		mainFrame.setLayout(new GridLayout(3, 2, 5, 5));
 		mainFrame.addWindowListener(new WindowAdapter() {
@@ -122,19 +122,25 @@ public class BookBuyerGuiImpl implements BookBuyerGui {
 			}
 		});
 		
-		Label bookToBueLbl = new Label("Book to Buy");
-		mainFrame.add(bookToBueLbl);
+		Label bookToSellLbl = new Label("Book to Sell");
+		mainFrame.add(bookToSellLbl);
 		
-		final TextField bookToBuy = new TextField();
-		mainFrame.add(bookToBuy);
+		final TextField bookToSell = new TextField();
+		mainFrame.add(bookToSell);
 		
-		Label maxPriceLbl = new Label("Max Price");
-		mainFrame.add(maxPriceLbl);
+		Label minPriceLbl = new Label("Min Price");
+		mainFrame.add(minPriceLbl);
 		
-		final TextField maxPrice = new TextField();
-		mainFrame.add(maxPrice);
+		final TextField minPrice = new TextField();
+		mainFrame.add(minPrice);
+		
+		Label initPriceLbl = new Label("Init Price");
+		mainFrame.add(initPriceLbl);
+		
+		final TextField initPrice = new TextField();
+		mainFrame.add(initPrice);
 
-		Button button = new Button("Buy");
+		Button button = new Button("Sell");
 		mainFrame.add(button);
 		
 		button.addActionListener(new ActionListener() {
@@ -142,7 +148,7 @@ public class BookBuyerGuiImpl implements BookBuyerGui {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					buyerAgent.purchase(bookToBuy.getText(), Integer.valueOf(maxPrice.getText()), new SimpleDateFormat("yyyy-MM-dd").parse("2015-11-21"));
+					sellerAgent.putForSale(bookToSell.getText(), Integer.valueOf(initPrice.getText()), Integer.valueOf(minPrice.getText()), new SimpleDateFormat("yyyy-MM-dd").parse("2015-11-21"));
 				} catch (NumberFormatException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();

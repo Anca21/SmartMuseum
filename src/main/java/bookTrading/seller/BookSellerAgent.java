@@ -8,7 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
+import jade.lang.acl.ACLMessage;
 
 /**
  * @author pradeeppeiris
@@ -19,33 +21,33 @@ public class BookSellerAgent extends Agent {
 	private Map catalogue = new HashMap();
 
 	// The GUI to interact with the user
-//	private BookSellerGui myGui;
+	private BookSellerGui myGui;
 
 	/**
 	 * Agent initializations
 	 */
 	protected void setup() {
 		// Create and show the GUI
-//		myGui = new BookSellerGuiImpl();
-//		myGui.setAgent(this);
-//		myGui.show();
+		myGui = new BookSellerGuiImpl();
+		myGui.setAgent(this);
+		myGui.show();
 
 		// Add the behaviour serving calls for price from buyer agents
-//		addBehaviour(new CallForOfferServer());
+		addBehaviour(new CallForOfferServer());
 
 		// Add the behaviour serving purchase requests from buyer agents
 //		addBehaviour(new PurchaseOrderServer());
 	}
 
 	protected void takeDown() {
-//		if (myGui != null) {
-//			myGui.dispose();
-//		}
+		if (myGui != null) {
+			myGui.dispose();
+		}
 		System.out.println("Seller-agent " + getAID().getName() + " terminating.");
 	}
 
 	public void putForSale(String title, int initPrice, int minPrice, Date deadline) {
-//		addBehaviour(new PriceManager(this, title, initPrice, minPrice, deadline);
+		addBehaviour(new PriceManager(this, title, initPrice, minPrice, deadline));
 	}
 
 	private class PriceManager extends TickerBehaviour {
@@ -54,7 +56,7 @@ public class BookSellerAgent extends Agent {
 		private long initTime, deadline, deltaT, currentPrice;
 
 		private PriceManager(Agent a, String t, int ip, int mp, Date d) {
-			super(a, 60000);
+			super(a, 5000);
 			title = t;
 			initPrice = ip;
 			currentPrice = initPrice;
@@ -69,20 +71,44 @@ public class BookSellerAgent extends Agent {
 		}
 
 		public void onTick() {
+			System.out.println("PriceManager onTick ");
 			long currentTime = System.currentTimeMillis();
 			if (currentTime > deadline) {
-				// Deadline expired myGui.notifyUser("Cannot sell book "+title);
-				// catalogue.remove(title);
+				// Deadline expired 
+				myGui.notifyUser("Cannot sell book "+title);
+				 catalogue.remove(title);
 				stop();
 			} else {
 				// Compute the current price
 				long elapsedTime = currentTime - initTime;
-				currentPrice = initPrice - deltaP * (elapsedTime / deltaT);
+				currentPrice = initPrice - 5;//deltaP * (elapsedTime / deltaT);
 			}
 		}
 		
 		public long getCurrentPrice() { 
 			return currentPrice;
+		}
+	}
+	
+	
+	private class CallForOfferServer extends CyclicBehaviour {
+		public void action() {
+			ACLMessage msg = myAgent.receive();
+			if (msg != null) {
+				String title = msg.getContent();
+				ACLMessage reply = msg.createReply();
+				
+				PriceManager pm = (PriceManager) catalogue.get(title);
+				if (pm != null) {
+					System.out.println(">>> The requested book is available for sale.");
+					reply.setPerformative(ACLMessage.PROPOSE);
+				    reply.setContent(String.valueOf(pm.getCurrentPrice()));
+				} else {
+					System.out.println(">>> The requested book is not available for sale.");
+					reply.setPerformative(ACLMessage.REFUSE);
+				}
+				myAgent.send(reply);
+			}
 		}
 	}
 }

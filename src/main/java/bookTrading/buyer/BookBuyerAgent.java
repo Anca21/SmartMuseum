@@ -9,6 +9,7 @@ import java.util.Vector;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
+import jade.lang.acl.ACLMessage;
 
 /**
  * @author pradeeppeiris
@@ -16,7 +17,7 @@ import jade.core.behaviours.TickerBehaviour;
  */
 public class BookBuyerAgent extends Agent {
 	// The list of known seller agents
-	private Vector sellerAgents = new Vector();
+	private Vector<AID> sellerAgents = new Vector<AID>();
 	
 	// The GUI to interact with the user 
 	private BookBuyerGui myGui;
@@ -26,13 +27,15 @@ public class BookBuyerAgent extends Agent {
 	   */
 	protected void setup() {
 		// Printout a welcome message 
-		System.out.println("Buyer-agent "+ getAID().getName()+" is ready.");
+		System.out.println("Buyer-agent "+ getAID().getName() + " is ready.");
 		
 		// Get names of seller agents as arguments 
 		Object[] args = getArguments();
 		if (args != null && args.length > 0) {
 			for (int i = 0; i < args.length; ++i) {
 				AID seller = new AID((String) args[i], AID.ISLOCALNAME);
+				System.out.println("Add Seller-agent "+ seller.getName());
+				
 				sellerAgents.addElement(seller);
 			}
 		}
@@ -75,7 +78,7 @@ public class BookBuyerAgent extends Agent {
 		private long deadline, initTime, deltaT;
 		
 		private PurchaseManager(Agent a, String t, int mp, Date d) {
-			super(a, 1000);
+			super(a, 5000);
 			title = t;
 			maxPrice = mp;
 			deadline = d.getTime();
@@ -92,9 +95,18 @@ public class BookBuyerAgent extends Agent {
 			} else {
 				// Compute the currently acceptable price and start a negotiation
 				long elapsedTime = currentTime - initTime;
-				long acceptablePrice = maxPrice * (elapsedTime / deltaT);
+				long acceptablePrice = maxPrice + 5;//* (elapsedTime / deltaT);
 //				myAgent.addBehaviour(new BookNegotiator(title,
 //					     acceptablePrice, this));
+				
+				ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
+				for (int i = 0; i < sellerAgents.size(); ++i) {
+					// Send this message to all seller agents
+					cfp.addReceiver(sellerAgents.get(i));
+				}
+				cfp.setContent(title);
+				myAgent.send(cfp);
+
 			}
 		}
 	}
