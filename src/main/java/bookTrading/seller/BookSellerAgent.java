@@ -10,6 +10,10 @@ import java.util.Map;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
@@ -32,6 +36,20 @@ public class BookSellerAgent extends Agent {
 		myGui = new BookSellerGuiImpl();
 		myGui.setAgent(this);
 		myGui.show();
+		
+		DFAgentDescription dfd = new DFAgentDescription();
+		dfd.setName(getAID());
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("Book-selling"); 
+		sd.setName(getLocalName()+"-Book-selling"); 
+		dfd.addServices(sd);
+		
+		try {
+			DFService.register(this, dfd);
+		} catch (FIPAException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		// Add the behaviour serving calls for price from buyer agents
 		addBehaviour(new CallForOfferServer());
@@ -43,6 +61,12 @@ public class BookSellerAgent extends Agent {
 	protected void takeDown() {
 		if (myGui != null) {
 			myGui.dispose();
+		}
+		try {
+			DFService.deregister(this);
+		} catch (FIPAException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		System.out.println("Seller-agent " + getAID().getName() + " terminating.");
 	}

@@ -10,6 +10,10 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
@@ -31,16 +35,37 @@ public class BookBuyerAgent extends Agent {
 		// Printout a welcome message
 		System.out.println("Buyer-agent " + getAID().getName() + " is ready.");
 
-		// Get names of seller agents as arguments
-		Object[] args = getArguments();
-		if (args != null && args.length > 0) {
-			for (int i = 0; i < args.length; ++i) {
-				AID seller = new AID((String) args[i], AID.ISLOCALNAME);
-				System.out.println("Add Seller-agent " + seller.getName());
-
-				sellerAgents.addElement(seller);
+//		// Get names of seller agents as arguments
+//		Object[] args = getArguments();
+//		if (args != null && args.length > 0) {
+//			for (int i = 0; i < args.length; ++i) {
+//				AID seller = new AID((String) args[i], AID.ISLOCALNAME);
+//				System.out.println("Add Seller-agent " + seller.getName());
+//
+//				sellerAgents.addElement(seller);
+//			}
+//		}
+		
+		addBehaviour(new TickerBehaviour(this, 60000) {
+			protected void onTick() {
+				DFAgentDescription template = new DFAgentDescription(); 
+				ServiceDescription sd = new ServiceDescription();
+				sd.setType("Book-selling");
+				template.addServices(sd);
+				
+				try {
+					DFAgentDescription[] result = DFService.search(myAgent, template);
+					sellerAgents.clear();
+					for (int i = 0; i < result.length; ++i) {
+						System.out.println("Found Seller Agent: " + result[i].getName());
+						sellerAgents.addElement(result[i].getName());
+					}
+				} catch (FIPAException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
-		}
+		});
 
 		// Show the GUI to interact with the user
 		myGui = new BookBuyerGuiImpl();
