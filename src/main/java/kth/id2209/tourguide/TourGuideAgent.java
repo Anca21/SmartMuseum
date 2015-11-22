@@ -9,6 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -32,7 +37,7 @@ public class TourGuideAgent extends Agent {
 	
 	private List<AID> curatorAgents = new ArrayList<AID>();
 	
-	private Map<String, List<String>> intresetArtifacts = new HashMap<String, List<String>>();
+	private Map<String, List<String>> artifactGenre = new HashMap<String, List<String>>();
 	
 	protected void setup() {
 		log.info("Initailize TourGuide Agent");
@@ -51,13 +56,57 @@ public class TourGuideAgent extends Agent {
 			log.severe("Error in TourGuide Agent register: " + e.getMessage());
 		}
 		
-		addBehaviour(new CuratorReply());
-		addBehaviour(new RecommendationOffer());
-		addBehaviour(new CuratorManager(this));
+		log.info("Add TickerBehavior which search for Curator Agents");
+		addBehaviour(new TickerBehaviour(this, 10000) {
+
+			@Override
+			protected void onTick() {
+				log.info("Search for CuratorAgent");
+				DFAgentDescription template = new DFAgentDescription(); 
+				ServiceDescription sd = new ServiceDescription();
+				sd.setType("Publish-curator");
+				template.addServices(sd);
+				
+				try {
+					DFAgentDescription[] result = DFService.search(myAgent, template);
+					curatorAgents.clear();
+					artifactGenre.clear();
+					for (int i = 0; i < result.length; ++i) {
+
+						log.info("CuratorAgent " + result[i].getName() + " is added to Curator Catalog");
+						curatorAgents.add(result[i].getName());
+						
+						log.info("CuratorAgent " + result[i].getName() + " is called to get its artifacts");
+						myAgent.addBehaviour(new OneShotBehaviour() {
+							@Override
+							public void action() {
+								ACLMessage cfp = new ACLMessage(ACLMessage.REQUEST);
+								for(AID curator : curatorAgents) {
+									cfp.addReceiver(curator);
+								}
+
+								cfp.setConversationId("curator-artifact");
+								cfp.setReplyWith("cfp" + System.currentTimeMillis());
+								myAgent.send(cfp);
+							}
+						});
+					}
+				} catch (FIPAException e) {
+					log.severe("Error in Curator Agent search: " + e.getMessage());
+				}	
+			}
+			
+		});
+		
+		log.info("Add CuratorManager which handle Curator reply");
+		addBehaviour(new CuratorManager());
+		
+		log.info("Add RecommendationManager which handle Profiler requests");
+		addBehaviour(new RecommendationManager());
 		
 	}
 	
-	private class CuratorReply extends CyclicBehaviour {
+	private class CuratorManager extends CyclicBehaviour {
 		private MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
 		@Override
 		public void action() {
@@ -65,30 +114,37 @@ public class TourGuideAgent extends Agent {
 			if (msg != null) {
 				String reply = msg.getContent();
 				log.info("Get CuratorReply " + msg.getContent());
-				updateInterestCatalog(reply);
-				
+				updateCatalogGenre(reply);
 			} else {
 				block();
 			}
 			
 		}
 		
-		private void updateInterestCatalog(String reply) {
-			String[] artifacts = reply.split(",");
-			if(artifacts != null && artifacts.length > 0) {
-				if(intresetArtifacts.containsKey(artifacts[1])) {
-					intresetArtifacts.get(artifacts[1]).add(artifacts[0]);
-				} else {
-					List<String> items = new ArrayList<String>();
-					items.add(artifacts[0]);
-					intresetArtifacts.put(artifacts[1], items);
+		private void updateCatalogGenre(String artifacts) {
+			log.info("Parse CuratorReply " + artifacts);
+			try {
+				JSONParser jsonParser = new JSONParser();
+				JSONArray jsonArray = (JSONArray)jsonParser.parse(artifacts);
+				for(Object obj :  jsonArray) {
+					JSONObject jsonLineItem = (JSONObject) obj;
+					String genre = (String) jsonLineItem.get("genre");
+					if(artifactGenre.containsKey(genre)) {
+						artifactGenre.get(genre).add(jsonLineItem.toJSONString());
+					} else {
+						List<String> items = new ArrayList<String>();
+						items.add(jsonLineItem.toJSONString());
+						artifactGenre.put(genre, items);
+					}
 				}
+			} catch (ParseException e) {
+				log.severe("Error in pasing CuratorReply " + e.getMessage());
 			}
 		}
 		
 	}
 	
-	private class RecommendationOffer extends CyclicBehaviour {
+	private class RecommendationManager extends CyclicBehaviour {
 		private MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
 		@Override
 		public void action() {
@@ -96,14 +152,13 @@ public class TourGuideAgent extends Agent {
 			if (msg != null) {
 				String profileIntrest = msg.getContent();
 				log.info("Request received: " + profileIntrest);
-//				String recommendation = getRecommendation(profileIntrest);
-//				log.info("LLLLLL: " + recommendation);
+				String recommendation = getRecommendation(profileIntrest);
+				log.info("Tour recommendation: " + recommendation);
 				
 				ACLMessage reply = msg.createReply();
 				reply.setPerformative(ACLMessage.PROPOSE);
-				reply.setContent("TEst Recommenation");
+				reply.setContent(recommendation);
 				myAgent.send(reply);
-				log.info(">>>>>>>>>> Message Sent: " + reply);
 			} else {
 				block();
 			}
@@ -111,74 +166,30 @@ public class TourGuideAgent extends Agent {
 		
 		private String getRecommendation(String profileIntrest) {
 			String[] intresets = profileIntrest.split(",");
-			StringBuilder sb = new StringBuilder();
-			
+			JSONArray list = new JSONArray();
 			for(String s : intresets) {
 				if(s != null && s.length() > 0) {
-					if(intresetArtifacts.containsKey(s)) {
-						List<String> list = intresetArtifacts.get(s);
-						for(String rec :  list) {
-							sb.append(rec).append("\n");
+					if(artifactGenre.containsKey(s)) {
+						JSONParser jsonParser = new JSONParser();
+						List<String> artifactListStr = artifactGenre.get(s);
+						for(String artifactStr :  artifactListStr) {
+							try {
+								JSONObject artifact = (JSONObject)jsonParser.parse(artifactStr);
+								list.add(artifact);
+							} catch (ParseException e) {
+								log.severe("Error in artfactStr parsing " + e.getMessage());
+							}
+							
 						}
 					}
 				}
 			}
-			
-			return sb.toString();
-		}
-		
-	}
-	
-	private class CuratorManager extends TickerBehaviour {
-		
-		private CuratorManager(Agent agent) {
-			super(agent, 5000);
-		}
-		
-		@Override
-		protected void onTick() {
-			log.info("Search for CuratorAgent");
-			DFAgentDescription template = new DFAgentDescription(); 
-			ServiceDescription sd = new ServiceDescription();
-			sd.setType("Publish-curator");
-			template.addServices(sd);
-			
-			try {
-				DFAgentDescription[] result = DFService.search(myAgent, template);
-				for (int i = 0; i < result.length; ++i) {
-					if(curatorAgents.contains(result[i].getName())) {
-						log.info("CuratorAgent " + result[i].getName() + " is already in Curator Catalog");
-					} else {
-						log.info("CuratorAgent " + result[i].getName() + " is added to Curator Catalog");
-						curatorAgents.add(result[i].getName());
-						myAgent.addBehaviour(new TourCatalogManager());
-					}
-				}
-				
-			} catch (FIPAException e) {
-				log.severe("Error in Curator Agent search: " + e.getMessage());
-			}
-			
+
+			return list.toJSONString();
 		}
 		
 	}
 
-	private class TourCatalogManager extends OneShotBehaviour {
-
-		@Override
-		public void action() {
-			log.info("Get Artifact details");
-			ACLMessage cfp = new ACLMessage(ACLMessage.REQUEST);
-			for(AID curator : curatorAgents) {
-				cfp.addReceiver(curator);
-			}
-
-			cfp.setConversationId("curator-artifact");
-			cfp.setReplyWith("cfp" + System.currentTimeMillis());
-			myAgent.send(cfp);
-		}
-		
-	}
 	
 	
 }

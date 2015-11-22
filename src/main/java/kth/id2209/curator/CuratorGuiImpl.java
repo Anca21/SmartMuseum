@@ -4,10 +4,12 @@
 package kth.id2209.curator;
 
 import java.awt.Button;
+import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.Label;
 import java.awt.List;
+import java.awt.Panel;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,8 +21,8 @@ import java.awt.event.WindowEvent;
  *
  */
 public class CuratorGuiImpl implements CuratorGui {
-	private static final int APP_WINDOW_HEIGHT = 500;
-	private static final int APP_WINDOW_WIDTH = 300;
+	private static final int APP_WINDOW_HEIGHT = 350;
+	private static final int APP_WINDOW_WIDTH = 500;
 	
 	private CuratorAgent agent;
 	
@@ -43,45 +45,72 @@ public class CuratorGuiImpl implements CuratorGui {
 	private void launch() {
 		Frame mainFrame = new Frame("Curator-" + agent.getLocalName());
 		mainFrame.setSize(APP_WINDOW_WIDTH, APP_WINDOW_HEIGHT);
+		mainFrame.setLayout(new GridLayout(0, 1, 15, 15));
 		mainFrame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent windowEvent) {
 				System.exit(0);
 			}
 		});
 		
-		
-		mainFrame.setLayout(new GridLayout(0, 2, 5, 5));
-		
-		mainFrame.add(new Label("Id"));
+		Panel idPanel = new Panel();
+		idPanel.setLayout(new GridLayout(1,2));
+		Label idLbl = new Label("  Id");
+		idLbl.setSize(150,50);
+		idPanel.add(idLbl);
 		final TextField id = new TextField();
-		mainFrame.add(id);
-		
-		mainFrame.add(new Label("Name"));
+		id.setSize(350,50);
+		idPanel.add(id);
+		mainFrame.add(idPanel);
+	      
+		Panel namePanel = new Panel();
+		namePanel.setLayout(new GridLayout(1,2));
+		Label nameLbl = new Label("  Name");
+		namePanel.add(nameLbl);
 		final TextField name = new TextField();
-		mainFrame.add(name);
+		namePanel.add(name);
+		mainFrame.add(namePanel);
 		
-		mainFrame.add(new Label("Creator"));
+		Panel creatorPanel = new Panel();
+		creatorPanel.setLayout(new GridLayout(1,2));
+		Label creatorLbl = new Label("  Creator");
+		creatorPanel.add(creatorLbl);
 		final TextField creator = new TextField();
-		mainFrame.add(creator);
+		creatorPanel.add(creator);
+		mainFrame.add(creatorPanel);
 		
-		mainFrame.add(new Label("Date of Create"));
+		Panel creDatePanel = new Panel();
+		creDatePanel.setLayout(new GridLayout(1,2));
+		Label credateLbl = new Label("  Date of Create");
+		creDatePanel.add(credateLbl);
 		final TextField dateCreate = new TextField();
-		mainFrame.add(dateCreate);
+		creDatePanel.add(dateCreate);
+		mainFrame.add(creDatePanel);
 		
-		mainFrame.add(new Label("Place of Create"));
+		Panel creplacePanel = new Panel();
+		creplacePanel.setLayout(new GridLayout(1,2));
+		Label creplaceLbl = new Label("  Place of Create");
+		creplacePanel.add(creplaceLbl);
 		final TextField placeCreate = new TextField();
-		mainFrame.add(placeCreate);
+		creplacePanel.add(placeCreate);
+		mainFrame.add(creplacePanel);
 		
-		mainFrame.add(new Label("Genre"));
-		final List genre = new List(1, true);
+		Panel genrePanel = new Panel();
+		genrePanel.setLayout(new GridLayout(1,2));
+		Label genreLbl = new Label("  Genre");
+		genrePanel.add(genreLbl);
+		final List genre = new List(1, false);
 		genre.add("Portrait Paintings");
 		genre.add("Landscape Paintings");
 		genre.add("Photography");
 		genre.add("Fantacy");
-		mainFrame.add(genre);
+		genrePanel.add(genre);
+		mainFrame.add(genrePanel);
 		 
+		Panel btnPanel = new Panel();
+		btnPanel.setLayout(new GridLayout(1,2));
 		Button button = new Button("Add Artifact");
-		mainFrame.add(button);
+		btnPanel.add(button);
+		mainFrame.add(btnPanel);
 		button.addActionListener(new ActionListener() {
 
 			@Override

@@ -41,13 +41,39 @@ public class ProfilerAgent extends Agent {
 		gui.setAgent(this);
 		gui.show();
 		
-		addBehaviour(new TourGuideManager(this));
+		log.info("Add TickerBehavior which search for TourGuide Agents");
+		addBehaviour(new TickerBehaviour(this, 5000) {
+
+			@Override
+			protected void onTick() {
+				DFAgentDescription template = new DFAgentDescription(); 
+				ServiceDescription sd = new ServiceDescription();
+				sd.setType("Publish-tourguide");
+				template.addServices(sd);
+				
+				try {
+					DFAgentDescription[] result = DFService.search(myAgent, template);
+					for (int i = 0; i < result.length; ++i) {
+						if(tourGuideAgents.contains(result[i].getName())) {
+							log.info("TourGuideAgent " + result[i].getName() + " is already in list");
+						} else {
+							log.info("TourGuideAgent " + result[i].getName() + " is added to list");
+							tourGuideAgents.add(result[i].getName());
+						}
+					}
+				} catch (FIPAException e) {
+					log.severe("Error in TourGuideAgent search: " + e.getMessage());
+				}
+				
+			}
+			
+		});
 		
 	}
 	
 	public void tourRequest() {
 		log.info("Tour request");
-		addBehaviour(new TourRecommendation());
+		addBehaviour(new TourGuideManager());
 	}
 	
 	
@@ -56,11 +82,11 @@ public class ProfilerAgent extends Agent {
 		addBehaviour(new ProfileManager(age, occupation, gender, intresets));
 	}
 	
-	private class TourRecommendation extends Behaviour {
+	private class TourGuideManager extends Behaviour {
 		private int step = 0;
 //		private MessageTemplate mt;
 		
-		public TourRecommendation() {
+		public TourGuideManager() {
 			super(null);
 		}
 		
@@ -78,26 +104,20 @@ public class ProfilerAgent extends Agent {
 				cfp.setReplyWith("cfp" + System.currentTimeMillis());
 				myAgent.send(cfp);
 				
-//				mt = MessageTemplate.and(MessageTemplate.MatchConversationId("tour-recommend"),
-//						MessageTemplate.MatchInReplyTo(cfp.getReplyWith()));
-				
 				step = 1;
 				break;
 			case 1:
 				log.info("Step 1. Receive Tour Recommendation");
 				MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
 				ACLMessage reply = myAgent.receive(mt);
-				log.info("XXXX " + reply);
 				if (reply != null) {
-					log.info("YYYY " + reply.getPerformative());
-					System.out.println("Step 1,  Recommenation " + reply.getContent());
+					log.info(">>>>>>> " + reply.getContent());
 					
 				} else {
 					block();
 				}
 				step = 2;
-				break;
-				
+				break;	
 			}
 			
 		}
@@ -109,38 +129,38 @@ public class ProfilerAgent extends Agent {
 		
 	}
 	
-	private class TourGuideManager extends TickerBehaviour {
-
-		private TourGuideManager(Agent agent) {
-			super(agent, 5000);
-		}
-		
-		@Override
-		protected void onTick() {
-			log.info("Search for TourGuideAgent");
-			DFAgentDescription template = new DFAgentDescription(); 
-			ServiceDescription sd = new ServiceDescription();
-			sd.setType("Publish-tourguide");
-			template.addServices(sd);
-			
-			try {
-				DFAgentDescription[] result = DFService.search(myAgent, template);
-				for (int i = 0; i < result.length; ++i) {
-					if(tourGuideAgents.contains(result[i].getName())) {
-						log.info("TourGuideAgent " + result[i].getName() + " is already in list");
-					} else {
-						log.info("TourGuideAgent " + result[i].getName() + " is added to list");
-						tourGuideAgents.add(result[i].getName());
-					}
-				}
-			} catch (FIPAException e) {
-				log.severe("Error in TourGuideAgent search: " + e.getMessage());
-			}
-			
-			
-		}
-		
-	}
+//	private class TourGuideManager extends TickerBehaviour {
+//
+//		private TourGuideManager(Agent agent) {
+//			super(agent, 5000);
+//		}
+//		
+//		@Override
+//		protected void onTick() {
+//			log.info("Search for TourGuideAgent");
+//			DFAgentDescription template = new DFAgentDescription(); 
+//			ServiceDescription sd = new ServiceDescription();
+//			sd.setType("Publish-tourguide");
+//			template.addServices(sd);
+//			
+//			try {
+//				DFAgentDescription[] result = DFService.search(myAgent, template);
+//				for (int i = 0; i < result.length; ++i) {
+//					if(tourGuideAgents.contains(result[i].getName())) {
+//						log.info("TourGuideAgent " + result[i].getName() + " is already in list");
+//					} else {
+//						log.info("TourGuideAgent " + result[i].getName() + " is added to list");
+//						tourGuideAgents.add(result[i].getName());
+//					}
+//				}
+//			} catch (FIPAException e) {
+//				log.severe("Error in TourGuideAgent search: " + e.getMessage());
+//			}
+//			
+//			
+//		}
+//		
+//	}
 	
 	private class ProfileManager extends OneShotBehaviour {
 		private Profile profile;

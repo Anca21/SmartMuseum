@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
@@ -66,19 +69,19 @@ public class CuratorAgent extends Agent {
 				log.info("Receive Artifact Rrequest");
 				
 				ACLMessage reply = msg.createReply();
-				reply.setContent(getArtifacts());
+				reply.setContent(createArtifactsList());
 				myAgent.send(reply);
 			} else {
 				block();
 			}
 		}
 		
-		private String getArtifacts() {
-			StringBuilder sb = new StringBuilder();
+		private String createArtifactsList() {
+			JSONArray list = new JSONArray();
 			for(Artifact a : artifacts.values()) {
-				sb.append(a.toString()).append(",");
+				list.add(a.getAttributes());
 			}
-			return sb.toString();
+			return list.toJSONString();
 		}
 		
 	}
@@ -102,27 +105,23 @@ public class CuratorAgent extends Agent {
 	
 	private class Artifact {
 		private String id;
-		private String name;
-		private String creator;
-		private String dateCreate;
-		private String placeCreate;
-		private String genre;
+		private JSONObject attributes;
 		
 		private Artifact(String id, String name, String creator, 
 				String dateCreate, String placeCreate, String genre) {
 			this.id = id;
-			this.name = name;
-			this.creator = creator;
-			this.dateCreate = dateCreate;
-			this.placeCreate = placeCreate;
-			this.genre = genre;
-		}
-		
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append(id).append(":").append(genre);
 			
-			return sb.toString();
+			this.attributes = new JSONObject();
+			this.attributes.put("id",id);
+			this.attributes.put("name",name);
+			this.attributes.put("creator",creator);
+			this.attributes.put("dateCreate",dateCreate);
+			this.attributes.put("placeCreate",placeCreate);
+			this.attributes.put("genre",genre);
+		}
+
+		public JSONObject getAttributes() {
+			return this.attributes;
 		}
 		
 	}
