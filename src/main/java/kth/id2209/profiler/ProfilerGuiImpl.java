@@ -24,6 +24,8 @@ public class ProfilerGuiImpl implements ProfilerGui {
 	
 	private ProfilerAgent agent;
 	
+	private Label recommendedTour = new Label();
+	
 	@Override
 	public void setAgent(ProfilerAgent agent) {
 		this.agent = agent;
@@ -66,21 +68,15 @@ public class ProfilerGuiImpl implements ProfilerGui {
 		
 		mainFrame.add(new Label("Intrest"));
 		final List intrest = new List(4, true);
-		intrest.add("mercury");
-		intrest.add("venus");
-		intrest.add("earth");
-		intrest.add("javasoft");
-		intrest.add("mars");
-		intrest.add("jupiter");
-		intrest.add("saturn");
-		intrest.add("uranus");
-		intrest.add("neptune");
-		intrest.add("pluto");
+		intrest.add("Portrait Paintings");
+		intrest.add("Landscape Paintings");
+		intrest.add("Photography");
+		intrest.add("Fantacy");
 		mainFrame.add(intrest);
 		 
-		Button button = new Button("Update Profile");
-		mainFrame.add(button);
-		button.addActionListener(new ActionListener() {
+		Button profileUpdate = new Button("Update Profile");
+		mainFrame.add(profileUpdate);
+		profileUpdate.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -88,6 +84,18 @@ public class ProfilerGuiImpl implements ProfilerGui {
 			}
 			
 		});
+		
+		Button tourRequest = new Button("Tour Request");
+		mainFrame.add(tourRequest);
+		tourRequest.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				agent.tourRequest();
+			}
+		});
+		
+		mainFrame.add(recommendedTour);
+		
 		mainFrame.setVisible(true);
 	}
 
