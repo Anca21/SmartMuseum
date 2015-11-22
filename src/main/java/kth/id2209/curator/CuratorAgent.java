@@ -57,7 +57,7 @@ public class CuratorAgent extends Agent {
 	
 	public void updateArtifacts(String id, String name, String creator, 
 									String dateCreate, String placeCreate, String genre) {
-		addBehaviour(new ArtifactManager(id, name, creator, dateCreate, placeCreate, genre));
+		addBehaviour(new ArtifactManager(id, name, creator, dateCreate, placeCreate, genre, getLocalName()));
 	}
 	
 	private class ArtifactRequest extends CyclicBehaviour {
@@ -91,8 +91,8 @@ public class CuratorAgent extends Agent {
 		private Artifact artifact;
 		
 		private ArtifactManager(String id, String name, String creator, 
-				String dateCreate, String placeCreate, String genre) {
-			this.artifact = new Artifact(id, name, creator, dateCreate, placeCreate, genre);
+				String dateCreate, String placeCreate, String genre, String holder) {
+			this.artifact = new Artifact(id, name, creator, dateCreate, placeCreate, genre, holder);
 		}
 		
 		@Override
@@ -108,7 +108,7 @@ public class CuratorAgent extends Agent {
 		private JSONObject attributes;
 		
 		private Artifact(String id, String name, String creator, 
-				String dateCreate, String placeCreate, String genre) {
+				String dateCreate, String placeCreate, String genre, String holder) {
 			this.id = id;
 			
 			this.attributes = new JSONObject();
@@ -118,6 +118,7 @@ public class CuratorAgent extends Agent {
 			this.attributes.put("dateCreate",dateCreate);
 			this.attributes.put("placeCreate",placeCreate);
 			this.attributes.put("genre",genre);
+			this.attributes.put("holder",holder);
 		}
 
 		public JSONObject getAttributes() {

@@ -111,7 +111,7 @@ public class ProfilerAgent extends Agent {
 				MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
 				ACLMessage reply = myAgent.receive(mt);
 				if (reply != null) {
-					log.info(">>>>>>> " + reply.getContent());
+					gui.updateTourSuggestions(reply.getContent());
 					
 				} else {
 					block();
@@ -128,39 +128,6 @@ public class ProfilerAgent extends Agent {
 		}
 		
 	}
-	
-//	private class TourGuideManager extends TickerBehaviour {
-//
-//		private TourGuideManager(Agent agent) {
-//			super(agent, 5000);
-//		}
-//		
-//		@Override
-//		protected void onTick() {
-//			log.info("Search for TourGuideAgent");
-//			DFAgentDescription template = new DFAgentDescription(); 
-//			ServiceDescription sd = new ServiceDescription();
-//			sd.setType("Publish-tourguide");
-//			template.addServices(sd);
-//			
-//			try {
-//				DFAgentDescription[] result = DFService.search(myAgent, template);
-//				for (int i = 0; i < result.length; ++i) {
-//					if(tourGuideAgents.contains(result[i].getName())) {
-//						log.info("TourGuideAgent " + result[i].getName() + " is already in list");
-//					} else {
-//						log.info("TourGuideAgent " + result[i].getName() + " is added to list");
-//						tourGuideAgents.add(result[i].getName());
-//					}
-//				}
-//			} catch (FIPAException e) {
-//				log.severe("Error in TourGuideAgent search: " + e.getMessage());
-//			}
-//			
-//			
-//		}
-//		
-//	}
 	
 	private class ProfileManager extends OneShotBehaviour {
 		private Profile profile;

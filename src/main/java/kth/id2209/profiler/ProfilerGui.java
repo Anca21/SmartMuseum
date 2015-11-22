@@ -23,5 +23,5 @@ public interface ProfilerGui {
 	/**
 	 * Update Tour suggestions
 	 */
-	void updateTourSuggestions();
+	void updateTourSuggestions(String content);
 }
