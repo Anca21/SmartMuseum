@@ -9,6 +9,8 @@ import java.util.logging.Logger;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -53,11 +55,106 @@ public class CuratorAgent extends Agent {
 		}
 		
 		addBehaviour(new ArtifactRequest());
+		addBehaviour(new AuctionItemListener());
+		addBehaviour(new AuctionPriceListener());
+		addBehaviour(new AuctionResultListener());
+		
 	}
 	
 	public void updateArtifacts(String id, String name, String creator, 
 									String dateCreate, String placeCreate, String genre) {
 		addBehaviour(new ArtifactManager(id, name, creator, dateCreate, placeCreate, genre, getLocalName()));
+	}
+	
+//	public void acceptOffer() {
+//		log.info("Accept Offer");
+//	}
+//	
+//	public void rejectOffer() {
+//		log.info("Reject Offer");
+//		
+//	}
+	
+	private class AuctionResultListener extends CyclicBehaviour {
+
+		private MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
+		
+		@Override
+		public void action() {
+			ACLMessage msg = myAgent.receive(mt);
+			if (msg != null) {
+				log.info("Receive Auction result: " + msg.getContent());
+				gui.updateAutionStatus(msg.getContent());
+			}
+		}
+		
+	}
+	
+	private class AuctionPriceListener extends CyclicBehaviour {
+		private MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
+		
+		@Override
+		public void action() {
+			final ACLMessage msg = myAgent.receive(mt);
+			if (msg != null) {
+				log.info("Receive Auction price: " + msg.getContent());
+				gui.updateAutionPrice(msg.getContent(), new OfferCallback() {
+
+					@Override
+					public void accept() {
+						log.info("Accept Offer " + msg.getContent());
+						ACLMessage reply = msg.createReply();
+						reply.setContent("Accept");
+						myAgent.send(reply);
+						
+					}
+
+					@Override
+					public void reject() {
+						log.info("Reject Offer" +  msg.getContent());
+						ACLMessage reply = msg.createReply();
+						reply.setContent("Reject");
+						myAgent.send(reply);
+						
+					}
+					
+				});
+			}
+		}
+		
+	}
+	
+	private class AuctionItemListener extends CyclicBehaviour {
+		private MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+		
+		@Override
+		public void action() {
+			ACLMessage msg = myAgent.receive(mt);
+			if (msg != null) {
+				log.info("Receive Action Rrequest of item: " + msg.getContent());
+				gui.updateAutionItem(getItemDetail(msg.getContent()));
+			}
+		}
+		
+		private String getItemDetail(String jsonString) {
+			StringBuilder sb = new StringBuilder();
+			
+			try {
+				JSONParser jsonParser = new JSONParser();
+				JSONObject jsonObject = (JSONObject)jsonParser.parse(jsonString);
+				
+				sb.append("Aution Item: ")
+					.append(jsonObject.get("id")).append(" ")
+					.append(jsonObject.get("name")).append(" (")
+					.append(jsonObject.get("type")).append(")");
+				
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+			
+			return sb.toString();
+		}
+		
 	}
 	
 	private class ArtifactRequest extends CyclicBehaviour {

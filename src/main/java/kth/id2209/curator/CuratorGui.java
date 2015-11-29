@@ -24,4 +24,22 @@ public interface CuratorGui {
 	 * Update Tour suggestions
 	 */
 	void addArtifact();
+	
+	/**
+	 * 
+	 * @param itemDetail
+	 */
+	void updateAutionItem(String itemDetail);
+	
+	/**
+	 * 
+	 * @param price
+	 */
+	void updateAutionPrice(String price, OfferCallback callback);
+	
+	/**
+	 * 
+	 * @param status
+	 */
+	void updateAutionStatus(String status);
 }

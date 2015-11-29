@@ -20,10 +20,20 @@ import java.awt.event.WindowEvent;
  *
  */
 public class CuratorGuiImpl implements CuratorGui {
-	private static final int APP_WINDOW_HEIGHT = 350;
+	private static final int APP_WINDOW_HEIGHT = 650;
 	private static final int APP_WINDOW_WIDTH = 500;
 	
 	private CuratorAgent agent;
+	
+	private Frame mainFrame;
+	
+	private Label autionItem;
+	
+	private Label autionPrice;
+	
+	private Label autionStatus;
+	
+	private OfferCallback offerCallback;
 	
 	@Override
 	public void setAgent(CuratorAgent agent) {
@@ -42,7 +52,7 @@ public class CuratorGuiImpl implements CuratorGui {
 	}
 	
 	private void launch() {
-		Frame mainFrame = new Frame("Curator-" + agent.getLocalName());
+		mainFrame = new Frame("Curator-" + agent.getLocalName());
 		mainFrame.setSize(APP_WINDOW_WIDTH, APP_WINDOW_HEIGHT);
 		mainFrame.setLayout(new GridLayout(0, 1, 15, 15));
 		mainFrame.addWindowListener(new WindowAdapter() {
@@ -119,7 +129,71 @@ public class CuratorGuiImpl implements CuratorGui {
 			}
 			
 		});
+		
+		Panel auctionPanel1 = new Panel();
+		auctionPanel1.setLayout(new GridLayout(1,1));
+		autionItem = new Label();
+		auctionPanel1.add(autionItem);
+		mainFrame.add(auctionPanel1);
+		
+		Panel auctionPanel2 = new Panel();
+		auctionPanel2.setLayout(new GridLayout(1,2));
+		autionPrice = new Label();
+		auctionPanel2.add(autionPrice);
+		
+		autionStatus = new Label();
+		auctionPanel2.add(autionStatus);
+		mainFrame.add(auctionPanel2);
+		
+		Panel auctionPanel3 = new Panel();
+		auctionPanel3.setLayout(new GridLayout(1,2));
+		Button accept = new Button("Accept Offer");
+		auctionPanel3.add(accept);
+		mainFrame.add(auctionPanel3);
+		accept.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				offerCallback.accept();
+			}
+			
+		});
+		
+		Button reject = new Button("Reject Offer");
+		auctionPanel3.add(reject);
+		mainFrame.add(auctionPanel3);
+		reject.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				offerCallback.reject();
+			}
+			
+		});
+		
+		
+		
 		mainFrame.setVisible(true);
 	}
 
+	public void updateAutionItem(String itemDetail) {
+		autionItem.setText(itemDetail);
+		autionItem.repaint();
+		
+		autionStatus.setText("");
+		autionStatus.repaint();
+	}
+	
+	public void updateAutionPrice(String price, OfferCallback callback) {
+		offerCallback = callback;
+		autionPrice.setText(price);
+		autionPrice.repaint();
+	}
+	
+	public void updateAutionStatus(String status) {
+		autionStatus.setText(status);
+		autionStatus.repaint();
+		
+	}
+	
 }
