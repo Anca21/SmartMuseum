@@ -13,6 +13,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import jade.core.Agent;
+import jade.core.ContainerID;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
@@ -21,30 +22,50 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.util.leap.Properties;
 
 /**
  * @author pradeeppeiris
  *
  */
 public class CuratorAgent extends Agent {
-
+	private final String DEFAULT_CONTAINER = "default";
+	
 	private static final Logger log = Logger.getLogger(CuratorAgent.class.getName());
 	
 	private Map<String, Artifact> artifacts = new HashMap<String, Artifact> ();
 	
-	private CuratorGui gui;
+	private transient CuratorGui gui;
 	
-	protected void setup() {
-		log.info("Initailize Curator Agent");
+	private String containerName;
+	
+	private void initGui() {
+		log.info("Initailize Curator Agent's GUI");
 		gui = new CuratorGuiImpl();
 		gui.setAgent(this);
 		gui.show();
+	}
+	
+	private void setContainerName() {
+		log.info("Set container name");
+		Properties prop = getBootProperties();
+		String contName = prop.getProperty("container-name");
+		if(contName != null) {
+			containerName = contName;
+		} else {
+			containerName = DEFAULT_CONTAINER;
+		}
+	}
+	
+	private void registerCurator() {
+		log.info("Register Curator Agent in DF");
 		
 		DFAgentDescription dfd = new DFAgentDescription();
 		dfd.setName(getAID());
 		ServiceDescription sd = new ServiceDescription();
 		sd.setType("Publish-curator"); 
 		sd.setName(getLocalName()+"-Publish-curator"); 
+		sd.setOwnership(containerName);
 		dfd.addServices(sd);
 		
 		try {
@@ -53,12 +74,38 @@ public class CuratorAgent extends Agent {
 		} catch (FIPAException e) {
 			log.severe("Error in Profile Agent register: " + e.getMessage());
 		}
-		
+	}
+	
+	private void addBehaviours() {
+		log.info("Add Behaviours of Curator Agent");
 		addBehaviour(new ArtifactRequest());
 		addBehaviour(new AuctionItemListener());
 		addBehaviour(new AuctionPriceListener());
 		addBehaviour(new AuctionResultListener());
+	}
+	
+	protected void setup() {
+		log.info("Initailize Curator Agent");
+		initGui();  
+		setContainerName();
+		registerCurator();
+		addBehaviours();
+	}
+	
+	protected void beforeClone() {
+		log.info(getLocalName() + " is cloning");
+	}
+
+	protected void afterClone() {
+		log.info(getLocalName() + " is cloned");
+		afterMove();
+	}
 		
+	protected void afterMove() {
+		log.info(getLocalName() + " is arrived to this location.");
+		initGui();
+		registerCurator();
+		addBehaviours();
 	}
 	
 	public void updateArtifacts(String id, String name, String creator, 
@@ -66,14 +113,12 @@ public class CuratorAgent extends Agent {
 		addBehaviour(new ArtifactManager(id, name, creator, dateCreate, placeCreate, genre, getLocalName()));
 	}
 	
-//	public void acceptOffer() {
-//		log.info("Accept Offer");
-//	}
-//	
-//	public void rejectOffer() {
-//		log.info("Reject Offer");
-//		
-//	}
+	public void cloneCurator(String containerName, String curatorName) {
+		log.info("Clone Curator with name: " + curatorName + " in container: " + containerName);
+		ContainerID destination = new ContainerID();
+		destination.setName(containerName);
+		doClone(destination, curatorName);
+	}
 	
 	private class AuctionResultListener extends CyclicBehaviour {
 

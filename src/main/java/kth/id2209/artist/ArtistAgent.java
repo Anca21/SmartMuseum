@@ -11,6 +11,7 @@ import org.json.simple.JSONObject;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.ContainerID;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.FSMBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
@@ -21,6 +22,8 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.util.leap.Properties;
+import kth.id2209.curator.CuratorGuiImpl;
 
 /**
  * @author pradeeppeiris
@@ -28,21 +31,57 @@ import jade.lang.acl.MessageTemplate;
  */
 public class ArtistAgent extends Agent {
 
+	private final String DEFAULT_CONTAINER = "default";
+	
 	private static final Logger log = Logger.getLogger(ArtistAgent.class.getName());
 
-	private ArtistGui gui;
+	private transient ArtistGui gui;
 	
 	private List<AID> curators = new ArrayList<AID>();
 
-	protected void setup() {
-		log.info("Initialize Artist Agent");
+	private String containerName;
+	
+	private void initGui() {
+		log.info("Initailize Artist Agent's GUI");
 		gui = new ArtistGuiImpl();
 		gui.setAgent(this);
 		gui.show();
-		
+	}
+	
+	private void setContainerName() {
+		log.info("Set container name");
+		Properties prop = getBootProperties();
+		String contName = prop.getProperty("container-name");
+		if(contName != null) {
+			containerName = contName;
+		} else {
+			containerName = DEFAULT_CONTAINER;
+		}
+	}
+	
+	protected void setup() {
+		log.info("Initialize Artist Agent");
+		initGui();
+		setContainerName();
 		registerCurators();
 	}
 
+	protected void beforeClone() {
+		log.info(getLocalName() + " is cloning");
+	}
+
+	protected void afterClone() {
+		log.info(getLocalName() + " is cloned");
+		initGui();
+		afterMove();
+	}
+		
+	protected void afterMove() {
+		log.info(getLocalName() + " is arrived to this location.");
+		setContainerName();
+		registerCurators();
+	}
+	
 	protected void takeDown() {
 
 	}
@@ -52,6 +91,7 @@ public class ArtistAgent extends Agent {
 		DFAgentDescription template = new DFAgentDescription(); 
 		ServiceDescription sd = new ServiceDescription();
 		sd.setType("Publish-curator");
+		sd.setOwnership(containerName);
 		template.addServices(sd);
 		try {
 			DFAgentDescription[] result = DFService.search(this, template);
@@ -69,6 +109,20 @@ public class ArtistAgent extends Agent {
 		log.info("Start Auction, Start Price: " + startPrice + " Reserved Price: " + reservePrice );
 		DutchAuction aution = new DutchAuction(id, name, type, startPrice, reservePrice, curators);
 		addBehaviour(aution);
+	}
+	
+	public void cloneArtist(String containerName, String curatorName) {
+		log.info("Clone Artist with name: " + curatorName + " in container: " + containerName);
+		ContainerID destination = new ContainerID();
+		destination.setName(containerName);
+		doClone(destination, curatorName);
+	}
+	
+	public void moveArtist(String containerName) {
+		log.info("Move Artist in container: " + containerName);
+		ContainerID destination = new ContainerID();
+		destination.setName(containerName);
+		doMove(destination);
 	}
 
 	private class DutchAuction extends FSMBehaviour {

@@ -1,5 +1,5 @@
-# smartmuseum
-Smart Museum Agent Framework
+# SmartMuseum
+Assignment of Distributed Artificial Intelligence and Intelligent Agents
 
 ## About
 Smart Museum is a simple Agent framework build on top of JADE. 
